@@ -1,8 +1,6 @@
 import networkx as nx
 from fastapi import Body, FastAPI, HTTPException
 
-# from pydantic import Body
-
 app = FastAPI()
 
 
@@ -60,6 +58,15 @@ example_parameters = {
     "check_route": {"start": "Entry Signal West", "end": "Exit Signal East 2"},
 }
 
+example_200_response = {
+    "description": "Item requested by ID",
+    "content": {
+        "application/json": {
+            "example": {"success": True},
+        },
+    },
+}
+
 
 # Endpoints
 
@@ -67,14 +74,7 @@ example_parameters = {
 @app.post(
     "/check_conflicts",
     responses={
-        200: {
-            "description": "Item requested by ID",
-            "content": {
-                "application/json": {
-                    "example": {"success": True},
-                },
-            },
-        },
+        200: example_200_response,
     },
 )
 async def check_conflicts(data: dict = Body(..., example=example_parameters)):
@@ -85,14 +85,13 @@ async def check_conflicts(data: dict = Body(..., example=example_parameters)):
         or "check_route" not in data
     ):
         raise HTTPException(status_code=404, detail="Invalid request body")
+
     station_graph = data["station_graph"]
     routes = data["routes"]
     check_route = data["check_route"]
 
     graph = _generate_graph(station_graph)
-
     graph = _remove_occupied_sections(graph, routes)
-
     return {"success": _check_if_path_exists(graph, check_route)}
 
 
